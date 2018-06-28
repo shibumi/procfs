@@ -56,30 +56,52 @@ func ParseClientStats(r io.Reader) (*ClientStats, error) {
 	stats.Header = make(map[string]int)
 	scanner := bufio.NewScanner(r)
 	// Parse header
-	for _, regexpHeader := range regexpHeaders {
-		scanner.Scan()
+	for scanner.Scanner() {
 		line := scanner.Text()
-		match := regexpHeader.FindStringSubmatch(line)
-		for index, name := range regexHeader.SubexpNames() {
-			stats.Header[name] = match[index]
+		for _, regexpHeader := range regexpHeaders {
+			match := regexpHeader.FindStringSubmatch(line)
+			if 0 == len(match) {
+				continue
+			}
+			for index, name := range regexHeader.SubexpNames() {
+				if 0 == index || "" == name {
+					continue
+				}
+				value, _ := strconv.Atoi(match[index])
+				if nil != err {
+					continue
+				}
+				stats.Header[name] = value
+			}
+			break
+		}
+		if strings.hasPrefix(line, "Total vfs") {
+			break
 		}
 	}
 	// Parse Shares
-	var tmpMap map[string]int
 	for scanner.Scan() {
 		line := scanner.Text()
 		for _, regexpSMB1 := range regexpSMB1s {
 			match := regexpSMB1.FindStringSubmatch(line)
+			if 0 == len(match) {
+				continue
+			}
 			for index, name := range regexpSMB1.SubexpNames() {
+				if 0 == index || "" == name {
+					continue
+				}
 				if "sessionID" == name {
-					tmpMap = make(map[string]int)
-					stats.ShareStats = append(stats.ShareStats, tmpMap)
-					tmpMap[name] = match[index]
-					shareTrigger = index
-				} else if 0 != shareTrigger {
-					tmpMap[name] = match[index]
+					stats.ShareStats = append(stats.ShareStats, make(map[string]int))
+				} else {
+					value, err := strconv.Atoi(match[index])
+					if nil != err {
+						continue
+					}
+					stats.ShareStats[len(stats.ShareStats)-1][name] = value
 				}
 			}
+			break
 		}
 	}
 
