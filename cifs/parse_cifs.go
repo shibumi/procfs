@@ -30,7 +30,6 @@ var regexpHeaders = [...]*regexp.Regexp{
 	regexp.MustCompile(`SMB Request/Response Buffer: (?P<smbBuffer>.*) Pool Size: (?P<smbPoolSize>.*)`),
 	regexp.MustCompile(`SMB Small Req/Resp Buffer: (?P<smbSmallBuffer>.*) Pool size: (?P<smbSmallPoolSize>.*)`),
 	regexp.MustCompile(`Operations (MIDs): (?P<operations>.*)`),
-	regexp.MustCompile(`^.{0}$`),
 	regexp.MustCompile(`(?P<sessionCount>.*) session (?P<shareReconnects>.*) share reconnects`),
 	regexp.MustCompile(`Total vfs operations: (?P<totalOperations>.*) maximum at one time: (?P<totalMaxOperations>.*)`),
 }
