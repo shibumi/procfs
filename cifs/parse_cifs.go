@@ -60,8 +60,8 @@ func ParseClientStats(r io.Reader) (*ClientStats, error) {
 		scanner.Scan()
 		line := scanner.Text()
 		match := regexpHeader.FindStringSubmatch(line)
-		for value, name := range regexHeader.SubexpNames() {
-			stats.Header[name] = value
+		for index, name := range regexHeader.SubexpNames() {
+			stats.Header[name] = match[index]
 		}
 	}
 	// Parse Shares
@@ -70,14 +70,14 @@ func ParseClientStats(r io.Reader) (*ClientStats, error) {
 		line := scanner.Text()
 		for _, regexpSMB1 := range regexpSMB1s {
 			match := regexpSMB1.FindStringSubmatch(line)
-			for value, name := range regexpSMB1.SubexpNames() {
+			for index, name := range regexpSMB1.SubexpNames() {
 				if "sessionID" == name {
 					tmpMap = make(map[string]int)
 					stats.ShareStats = append(stats.ShareStats, tmpMap)
-					tmpMap[name] = value
-					shareTrigger = value
+					tmpMap[name] = match[index]
+					shareTrigger = index
 				} else if 0 != shareTrigger {
-					tmpMap[name] = value
+					tmpMap[name] = match[index]
 				}
 			}
 		}
