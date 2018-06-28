@@ -53,7 +53,7 @@ var regexpSMB1s = [...]*regexp.Regexp{
 // ParseClientStats returns stats read from /proc/fs/cifs/Stats
 func ParseClientStats(r io.Reader) (*ClientStats, error) {
 	stats := &ClientStats{}
-	stats.ShareStats = make(map[string]interface{})
+	stats.Header = make(map[string]int)
 	scanner := bufio.NewScanner(r)
 	// Parse header
 	for _, regexpHeader := range regexpHeaders {
@@ -61,50 +61,25 @@ func ParseClientStats(r io.Reader) (*ClientStats, error) {
 		line := scanner.Text()
 		match := regexpHeader.FindStringSubmatch(line)
 		for value, name := range regexHeader.SubexpNames() {
-			switch name {
-			case "sessions":
-				stats.Sessions = value
-			case "shares":
-				stats.Shares = value
-			case "smbBuffer":
-				stats.SMBBuffer = value
-			case "smbPoolSize":
-				stats.SMBPoolSize = value
-			case "smbSmallBuffer":
-				stats.SMBSmallBuffer = value
-			case "smbSmallPoolSize":
-				stats.SMBSmallPoolSize = value
-			case "operations":
-				stats.Operations = value
-			case "sessionCount":
-				stats.SessionCount = value
-			case "shareReconnects":
-				stats.ShareReconnects = value
-			case "totalOperations":
-				stats.TotalOperations = value
-			case "totalMaxOperations":
-				stats.TotalMaxOperations = value
-			default:
-				return nil, fmt.Errorf("unknown CIFS keyword: %q, name")
-			}
+			stats.Header[name] = value
 		}
 	}
 	// Parse Shares
+	var tmpMap map[string]int
 	for scanner.Scan() {
 		line := scanner.Text()
 		for _, regexpSMB1 := range regexpSMB1s {
+			match := regexpSMB1.FindStringSubmatch(line)
 			for value, name := range regexpSMB1.SubexpNames() {
 				if "sessionID" == name {
-					stats.ShareStats[value] = make(map[string]int)
-					shareTrigger = i
+					tmpMap = make(map[string]int)
+					stats.ShareStats = append(stats.ShareStats, tmpMap)
+					tmpMap[name] = value
+					shareTrigger = value
 				} else if 0 != shareTrigger {
-					stats.ShareStats[value].(map[string]int)[name] = value
-					// das else hier ist noch bullshit..
-				} else {
-					stats[name] = i
+					tmpMap[name] = value
 				}
 			}
-
 		}
 	}
 
