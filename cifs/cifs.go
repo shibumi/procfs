@@ -16,23 +16,8 @@
 
 package cifs
 
-// Header model of /proc/fs/cifs/Stats
-type Header struct {
-	Sessions           uint64
-	Shares             uint64
-	SMBBuffer          uint64
-	SMBPoolSize        uint64
-	SMBSmallBuffer     uint64
-	SMBSmallPoolSize   uint64
-	Operations         uint64
-	SessionCount       uint64
-	ShareReconnects    uint64
-	TotalOperations    uint64
-	TotalMaxOperations uint64
-}
-
 // model for the ClientStats
 type ClientStats struct {
-	Header     Header
+	Header     map[string]int
 	ShareStats []map[string]int
 }
