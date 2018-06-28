@@ -16,48 +16,23 @@
 
 package cifs
 
-// General models the general information header of /proc/fs/cifs/Stats
-type General struct {
-	Sessions                 uint64
-	Shares                   uint64
-	SMBBuffers               uint64
-	SMBPoolSize              uint64
-	SMBSmallBuffers          uint64
-	SMBSmallPoolSize         uint64
-	Operations               uint64
-	ShareReconnects          uint64
-	TotalOperations          uint64
-	TotalOperationsAtOneTime uint64
+// Header model of /proc/fs/cifs/Stats
+type Header struct {
+	Sessions           uint64
+	Shares             uint64
+	SMBBuffer          uint64
+	SMBPoolSize        uint64
+	SMBSmallBuffer     uint64
+	SMBSmallPoolSize   uint64
+	Operations         uint64
+	SessionCount       uint64
+	ShareReconnects    uint64
+	TotalOperations    uint64
+	TotalMaxOperations uint64
 }
 
-// ShareStats models the statistics for each share
-type ShareStats struct {
-	Path        string
-	SMBs        uint64
-	Reads       uint64
-	ReadsBytes  uint64
-	WritesBytes uint64
-	Writes      uint64
-	Flushes     uint64
-	Locks       uint64
-	HardLinks   uint64
-	Symlinks    uint64
-	Opens       uint64
-	Closes      uint64
-	Deletes     uint64
-	PosixOpens  uint64
-	PosixMkdirs uint64
-	Mkdirs      uint64
-	Rmdirs      uint64
-	Renames     uint64
-	T2Renames   uint64
-	FindFirst   uint64
-	FNext       uint64
-	FClose      uint64
-}
-
-// ClientStats
+// model for the ClientStats
 type ClientStats struct {
-	General    General
-	ShareStats []ShareStats
+	Header     Header
+	ShareStats []map[string]int
 }
