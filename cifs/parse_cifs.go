@@ -100,7 +100,6 @@ func ParseClientStats(r io.Reader) (*ClientStats, error) {
 							Stats: make(map[string]uint64),
 						}
 						stats.SMB1Stats = append(stats.SMB1Stats, tmpSMB1Stats)
-						legacy = true
 						value, err := strconv.ParseUint(match[index], 10, 64)
 						if nil != err {
 							continue
