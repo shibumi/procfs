@@ -35,10 +35,6 @@ var regexpHeaders = [...]*regexp.Regexp{
 }
 
 // Array with fixed regex for parsing SMB1
-// TODO sessionID Regex fixen zb \\share\foo\bar\foo
-// SessionID speichern
-// Strings im Struct speichern
-// https://paste.xinu.at/Z2Zz
 var regexpSMB1s = [...]*regexp.Regexp{
 	regexp.MustCompile(`(?P<sessionID>\d+)\) \\\\(?P<server>[A-Za-z1-9-.]+)(?P<share>.+)`),
 	regexp.MustCompile(`SMBs: (?P<smbs>\d+) Oplocks breaks: (?P<breaks>\d+)`),
@@ -104,7 +100,7 @@ func ParseClientStats(r io.Reader) (*ClientStats, error) {
 					currentSMB1Stats := &SMB1Stats{
 						Stats: make(map[string]uint64),
 					}
-					stats.ShareStats = append(stats.ShareStats, currentSMB1Stats)
+					stats.SMB1Stats = append(stats.SMB1Stats, currentSMB1Stats)
 					currentSMB1Stats.SessionId = value
 				case "server":
 					currentSMB1Stats.Server = value
