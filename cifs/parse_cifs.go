@@ -49,6 +49,13 @@ var regexpSMB1s = [...]*regexp.Regexp{
 	regexp.MustCompile(`FindFirst: (?P<findFirst>\d+) FNext (?P<fNext>\d+) FClose (?P<fClose>\d+)`),
 }
 
+// Array with fixed regex for parsing SMB2
+var regexpSMB2s = [...]*regexp.Regexp{
+	regexp.MustCompile(`(?P<sessionID>\d+)\) \\\\(?P<server>[A-Za-z1-9-.]+)(?P<share>.+)`),
+	regexp.MustCompile(`SMBs: (?P<smbs>\d+)`),
+	regexp.MustCompile(`(?P<keyword>.*): (?P<sent>\d+) sent (?P<failed>\d+) failed`),
+}
+
 // ParseClientStats returns stats read from /proc/fs/cifs/Stats
 func ParseClientStats(r io.Reader) (*ClientStats, error) {
 	stats := &ClientStats{}
@@ -80,6 +87,12 @@ func ParseClientStats(r io.Reader) (*ClientStats, error) {
 	}
 	// Parse Shares
 	var tmpSMB1Stats *SMB1Stats
+	var tmpSMB2Stats *SMB2Stats
+	var tmpSessionIDs *SessionIDs
+	var sessionID uint64
+	var server string
+	var share string
+	legacy := true
 	for scanner.Scan() {
 		line := scanner.Text()
 		for _, regexpSMB1 := range regexpSMB1s {
@@ -87,27 +100,55 @@ func ParseClientStats(r io.Reader) (*ClientStats, error) {
 			if 0 == len(match) {
 				continue
 			}
-			for index, name := range regexpSMB1.SubexpNames() {
-				if 0 == index || "" == name {
-					continue
-				}
-				value, err := strconv.Atoi(match[index])
-				if nil != err {
-					continue
-				}
-				switch name {
-				case "sessionID":
-					currentSMB1Stats := &SMB1Stats{
-						Stats: make(map[string]uint64),
+			if legacy {
+				for index, name := range regexpSMB1.SubexpNames() {
+					if 0 == index || "" == name {
+						continue
 					}
-					stats.SMB1Stats = append(stats.SMB1Stats, currentSMB1Stats)
-					currentSMB1Stats.SessionId = value
-				case "server":
-					currentSMB1Stats.Server = value
-				case "share":
-					currentSMB1Stats.Server = value
-				default:
-					stats.currentSMB1Stats.Stats[len(stats.ShareStats)-1][name] = value
+					value, err := strconv.Atoi(match[index])
+					if nil != err {
+						continue
+					}
+					switch name {
+					case "sessionID":
+						sessionID = value
+						tmpSessionIDs := &SessionIDs
+						tmpSMB1Stats := &SMB1Stats{
+							Stats: make(map[string]uint64),
+						}
+						stats.SMB1Stats = append(stats.SMB1Stats, tmpSMB1Stats)
+						tmpSMB1Stats.SessionId = value
+					case "server":
+						server = value
+						tmpSMB1Stats.Server = value
+					case "share":
+						share = value
+						tmpSMB1Stats.Server = value
+					case "smbs":
+						if len(match) > 1 {
+							tmpSMB1Stats := &SMB1Stats{
+								Stats: make(map[string]uint64),
+							}
+							stats.SMB1Stats = append(stats.SMB1Stats, tmpSMB1Stats)
+							legacy = true
+							stats.tmpSMB1Stats.Stats[len(stats.SMB1Stats)-1][name] = value
+						} else if len(match) == 1 {
+							tmpSMB2Stats := &SMB2Stats{
+								Stats: make(map[string]map[string]uint64),
+							}
+							stats.SMB2Stats = append(stats.SMB2Stats, tmpSMB2Stats)
+							legacy = false
+						} else {
+							continue
+						}
+					default:
+						if "" == tmpSessionIDs.sessionID {
+							tmpSessionIDs.SessionID = sessionID
+							tmpSessionIDs.Server = server
+							tmpSessionIDs.Share = share
+						}
+						stats.tmpSMB1Stats.Stats[len(stats.ShareStats)-1][name] = value
+					}
 				}
 			}
 			break

@@ -18,14 +18,25 @@ package cifs
 
 // model for the SMB1 statistics
 type SMB1Stats struct {
+	SessionIDs SessionIDs
+	Stats      map[string]uint64
+}
+
+// model for SMB2 statistics
+type SMB2Stats struct {
+	SessionIDs SessionIDs
+	Stats      map[string]map[string]uint64
+}
+
+type SessionIDs struct {
 	SessionID uint64
 	Server    string
 	Share     string
-	Stats     map[string]uint64
 }
 
 // model for the CIFS header statistics
 type ClientStats struct {
 	Header    map[string]uint64
 	SMB1Stats []*SMB1Stats
+	SMB2Stats []*SMB2Stats
 }
