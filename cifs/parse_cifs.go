@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	"github.com/prometheus/procfs/internal/util"
+	"strconv"
 )
 
 // Array with fixed regex for parsing the SMB stats header
@@ -42,31 +43,31 @@ var regexpSMB1s = [...]*regexp.Regexp{
 	regexp.MustCompile(`Writes: (?P<writes>\d+) Bytes: (?P<writesBytes>\d+)`),
 	regexp.MustCompile(`Flushes: (?P<flushes>\d+)`),
 	regexp.MustCompile(`Locks: (?P<locks>\d+) HardLinks: (?P<hardlinks>\d+) Symlinks: (?P<symlinks>\d+)`),
-	regexp.MustCompile(`Opens: (?P<opens>\d+) Closes: (?P<closes>\d+) Deletes: (?<deletes>\d+)`),
+	regexp.MustCompile(`Opens: (?P<opens>\d+) Closes: (?P<closes>\d+) Deletes: (?P<deletes>\d+)`),
 	regexp.MustCompile(`Posix Opens: (?P<posixOpens>\d+) Posix Mkdirs: (?P<posixMkdirs>\d+)`),
 	regexp.MustCompile(`Mkdirs: (?P<mkdirs>\d+) Rmdirs: (?P<rmdirs>\d+)`),
-	regexp.MustCompile(`Renames: (?P<renames\d+) T2 Renames (?<t2Renames>\d+)`),
+	regexp.MustCompile(`Renames: (?P<renames>\d+) T2 Renames (?P<t2Renames>\d+)`),
 	regexp.MustCompile(`FindFirst: (?P<findFirst>\d+) FNext (?P<fNext>\d+) FClose (?P<fClose>\d+)`),
 }
 
 // ParseClientStats returns stats read from /proc/fs/cifs/Stats
 func ParseClientStats(r io.Reader) (*ClientStats, error) {
 	stats := &ClientStats{}
-	stats.Header = make(map[string]int)
+	stats.Header = make(map[string]uint64)
 	scanner := bufio.NewScanner(r)
 	// Parse header
-	for scanner.Scanner() {
+	for scanner.Scan() {
 		line := scanner.Text()
 		for _, regexpHeader := range regexpHeaders {
 			match := regexpHeader.FindStringSubmatch(line)
 			if 0 == len(match) {
 				continue
 			}
-			for index, name := range regexHeader.SubexpNames() {
+			for index, name := range regexpHeader.SubexpNames() {
 				if 0 == index || "" == name {
 					continue
 				}
-				value, _ := strconv.Atoi(match[index])
+				value, err := strconv.ParseUint(match[index], 10, 64)
 				if nil != err {
 					continue
 				}
@@ -74,7 +75,7 @@ func ParseClientStats(r io.Reader) (*ClientStats, error) {
 			}
 			break
 		}
-		if strings.hasPrefix(line, "Total vfs") {
+		if strings.HasPrefix(line, "Total vfs") {
 			break
 		}
 	}
@@ -91,23 +92,31 @@ func ParseClientStats(r io.Reader) (*ClientStats, error) {
 				if 0 == index || "" == name {
 					continue
 				}
-				value, err := strconv.Atoi(match[index])
-				if nil != err {
-					continue
-				}
 				switch name {
 				case "sessionID":
-					currentSMB1Stats := &SMB1Stats{
+					tmpSMB1Stats := &SMB1Stats{
 						Stats: make(map[string]uint64),
 					}
-					stats.SMB1Stats = append(stats.SMB1Stats, currentSMB1Stats)
-					currentSMB1Stats.SessionId = value
+					stats.ShareStatsSMB1 = append(stats.ShareStatsSMB1, tmpSMB1Stats)
+					value, err := strconv.ParseUint(match[index], 10, 64)
+					if nil != err {
+						continue
+					}
+					tmpSMB1Stats.SessionID = value
 				case "server":
-					currentSMB1Stats.Server = value
+					if "" != match[index] {
+						tmpSMB1Stats.Server = match[index]
+					}
 				case "share":
-					currentSMB1Stats.Server = value
+					if "" != match[index] {
+						tmpSMB1Stats.Share = match[index]
+					}
 				default:
-					stats.currentSMB1Stats.Stats[len(stats.ShareStats)-1][name] = value
+					value, err := strconv.ParseUint(match[index], 10, 64)
+					if nil != err {
+						continue
+					}
+					tmpSMB1Stats.Stats[name] = value
 				}
 			}
 			break

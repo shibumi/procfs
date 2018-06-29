@@ -27,5 +27,5 @@ type SMB1Stats struct {
 // model for the CIFS header statistics
 type ClientStats struct {
 	Header    map[string]uint64
-	SMB1Stats []*SMB1Stats
+	ShareStatsSMB1 []*SMB1Stats
 }
