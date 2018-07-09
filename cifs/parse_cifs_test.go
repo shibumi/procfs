@@ -55,35 +55,65 @@ Posix Opens: 0 Posix Mkdirs: 0
 Mkdirs: 0 Rmdirs: 0
 Renames: 0 T2 Renames 0
 FindFirst: 1 FNext 0 FClose 0`,
-stats: &cifs.ClientStats{
-	Header: make(map[string]uint64),
-	SMB1Stats: [1]cifs.SMB1Stats{
-		SMB1Stats: cifs.SMB1Stats {
-		SessionIDs: cifs.SessionIDs{
-			SessionID: 1,
-			Server:    "\\\\server",
-			Share:     "\\share",
+			stats: &cifs.ClientStats{
+				Header: map[string]uint64{
+					"sessionCount":       0,
+					"sessions":           1,
+					"shareReconnects":    0,
+					"smbBuffer":          1,
+					"smbPoolSize":        5,
+					"smbSmallBuffer":     1,
+					"smbSmallPoolSize":   30,
+					"totalMaxOperations": 2,
+					"totalOperations":    16,
+				},
+				SMB1Stats: []*cifs.SMB1Stats{
+					&SMB1Stats{
+						SessionIDs{
+							SessionID: 1,
+							Server:    "server",
+							Share:     "\\share",
+						},
+						Stats: map[string]uint64{
+							"closes":      0,
+							"deletes":     0,
+							"fClose":      0,
+							"fNext":       0,
+							"findFirst":   1,
+							"flushes":     0,
+							"hardlinks":   0,
+							"locks":       0,
+							"mkdirs":      0,
+							"opens":       0,
+							"posixMkdirs": 0,
+							"posixOpens":  0,
+							"reads":       0,
+							"readsBytes":  0,
+							"renames":     0,
+							"rmdirs":      0,
+							"symlinks":    0,
+							"t2Renames":   0,
+							"writes":      0,
+							"writesBytes": 0,
+						},
+					},
+				},
+			},
 		},
-		Stats: make(map[string]uint64),
-		},
-	},
-},
-	},
-		}
-		for _, tt := range tests {
-			t.Run(tt.name, func(t *testing.T) {
-				stats, err := cifs.ParseClientStats(strings.NewReader(tt.content))
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			stats, err := cifs.ParseClientStats(strings.NewReader(tt.content))
 
-				if tt.invalid && nil == err {
-					t.Fatal("expected an error, but none occured")
-				}
-				if !tt.invalid && nil != err {
-					t.Fatalf("unexpected error: %v", err)
-				}
-				if want, have := tt.stats, stats; !reflect.DeepEqual(want, have) {
-					t.Fatalf("unexpected CIFS Stats:\nwant:\n%v\nhave:\n%v", want, have)
-				}
-			})
-		}
+			if tt.invalid && nil == err {
+				t.Fatal("expected an error, but none occured")
+			}
+			if !tt.invalid && nil != err {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if want, have := tt.stats, stats; !reflect.DeepEqual(want, have) {
+				t.Fatalf("unexpected CIFS Stats:\nwant:\n%v\nhave:\n%v", want, have)
+			}
+		})
+	}
 }
-
