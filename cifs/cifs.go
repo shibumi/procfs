@@ -46,10 +46,10 @@ type ClientStats struct {
 // Array with fixed regex for parsing the SMB stats header
 var regexpHeaders = [...]*regexp.Regexp{
 	regexp.MustCompile(`CIFS Session: (?P<sessions>\d+)`),
-	regexp.MustCompile(`Share (unique mount targets): (?P<shares>\d+)`),
+	regexp.MustCompile(`Share \(unique mount targets\): (?P<shares>\d+)`),
 	regexp.MustCompile(`SMB Request/Response Buffer: (?P<smbBuffer>\d+) Pool Size: (?P<smbPoolSize>\d+)`),
 	regexp.MustCompile(`SMB Small Req/Resp Buffer: (?P<smbSmallBuffer>\d+) Pool size: (?P<smbSmallPoolSize>\d+)`),
-	regexp.MustCompile(`Operations (MIDs): (?P<operations>\d+)`),
+	regexp.MustCompile(`Operations \(MIDs\): (?P<operations>\d+)`),
 	regexp.MustCompile(`(?P<sessionCount>\d+) session (?P<shareReconnects>\d+) share reconnects`),
 	regexp.MustCompile(`Total vfs operations: (?P<totalOperations>\d+) maximum at one time: (?P<totalMaxOperations>\d+)`),
 }
