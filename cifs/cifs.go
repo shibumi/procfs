@@ -62,10 +62,10 @@ var regexpSMB1s = [...]*regexp.Regexp{
 	regexp.MustCompile(`Writes: (?P<writes>\d+) Bytes: (?P<writesBytes>\d+)`),
 	regexp.MustCompile(`Flushes: (?P<flushes>\d+)`),
 	regexp.MustCompile(`Locks: (?P<locks>\d+) HardLinks: (?P<hardlinks>\d+) Symlinks: (?P<symlinks>\d+)`),
-	regexp.MustCompile(`Opens: (?P<opens>\d+) Closes: (?P<closes>\d+) Deletes: (?<deletes>\d+)`),
+	regexp.MustCompile(`Opens: (?P<opens>\d+) Closes: (?P<closes>\d+) Deletes: (?P<deletes>\d+)`),
 	regexp.MustCompile(`Posix Opens: (?P<posixOpens>\d+) Posix Mkdirs: (?P<posixMkdirs>\d+)`),
 	regexp.MustCompile(`Mkdirs: (?P<mkdirs>\d+) Rmdirs: (?P<rmdirs>\d+)`),
-	regexp.MustCompile(`Renames: (?P<renames\d+) T2 Renames (?<t2Renames>\d+)`),
+	regexp.MustCompile(`Renames: (?P<renames>\d+) T2 Renames (?P<t2Renames>\d+)`),
 	regexp.MustCompile(`FindFirst: (?P<findFirst>\d+) FNext (?P<fNext>\d+) FClose (?P<fClose>\d+)`),
 }
 
