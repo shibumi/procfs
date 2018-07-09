@@ -57,9 +57,11 @@ Renames: 0 T2 Renames 0
 FindFirst: 1 FNext 0 FClose 0`,
 			stats: &cifs.ClientStats{
 				Header: map[string]uint64{
+					"operations": 0,
 					"sessionCount":       0,
 					"sessions":           1,
 					"shareReconnects":    0,
+					"shares": 4,
 					"smbBuffer":          1,
 					"smbPoolSize":        5,
 					"smbSmallBuffer":     1,
