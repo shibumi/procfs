@@ -17,11 +17,10 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"strings"
-	"strconv"
 	"regexp"
+	"strconv"
+	"strings"
 )
-
 
 // ParseClientStats returns stats read from /proc/fs/cifs/Stats
 func ParseClientStats(r io.Reader) (*ClientStats, error) {

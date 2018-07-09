@@ -68,8 +68,8 @@ FindFirst: 1 FNext 0 FClose 0`,
 					"totalOperations":    16,
 				},
 				SMB1Stats: []*cifs.SMB1Stats{
-					&SMB1Stats{
-						SessionIDs{
+					&cifs.SMB1Stats{
+						SessionIDs: cifs.SessionIDs{
 							SessionID: 1,
 							Server:    "server",
 							Share:     "\\share",
