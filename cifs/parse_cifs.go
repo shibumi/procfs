@@ -19,6 +19,7 @@ import (
 	"io"
 	"strings"
 	"strconv"
+	"regexp"
 )
 
 
@@ -68,6 +69,14 @@ func ParseClientStats(r io.Reader) (*ClientStats, error) {
 							Stats: make(map[string]map[string]uint64),
 						}
 						stats.SMB2Stats = append(stats.SMB2Stats, tmpSMB2Stats)
+						re := regexp.MustCompile("[0-9]+")
+						find_smb := re.FindAllString(line, 1)
+						tmpSMB2Stats.Stats["smbs"] = make(map[string]uint64)
+						value, err := strconv.ParseUint(find_smb[0], 10, 64)
+						if nil != err {
+							continue
+						}
+						tmpSMB2Stats.Stats["smbs"]["smbs"] = value
 						break
 					}
 					continue
@@ -130,6 +139,19 @@ func ParseClientStats(r io.Reader) (*ClientStats, error) {
 							Stats: make(map[string]uint64),
 						}
 						stats.SMB1Stats = append(stats.SMB1Stats, tmpSMB1Stats)
+						re := regexp.MustCompile("[0-9]+")
+						find_smb := re.FindAllString(line, 2)
+						smbs, err := strconv.ParseUint(find_smb[0], 10, 64)
+						if nil != err {
+							continue
+						}
+						breaks, err := strconv.ParseUint(find_smb[1], 10, 64)
+						if nil != err {
+							continue
+						}
+						tmpSMB1Stats.Stats["smbs"] = smbs
+						tmpSMB1Stats.Stats["breaks"] = breaks
+
 						break
 					}
 					continue
