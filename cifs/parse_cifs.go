@@ -18,8 +18,6 @@ import (
 	"fmt"
 	"io"
 	"strings"
-
-	"github.com/prometheus/procfs/internal/util"
 	"strconv"
 )
 
