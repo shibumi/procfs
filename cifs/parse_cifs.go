@@ -213,5 +213,9 @@ func ParseClientStats(r io.Reader) (*ClientStats, error) {
 		return nil, fmt.Errorf("error scanning SMB file: %s", err)
 	}
 
+	if 0 == len(stats.Header) {
+		// We should never have an empty Header. Otherwise the file is invalid
+		return nil, fmt.Errorf("error scanning SMB file: header is empty")
+	}
 	return stats, nil
 }
