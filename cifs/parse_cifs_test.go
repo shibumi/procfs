@@ -241,6 +241,189 @@ OplockBreaks: 0 sent 0 failed`,
 					},
 				},
 			},
+		}, {
+			name: "Mixed statistics (SMB1 then SMB2)",
+			content: `Resources in use
+CIFS Session: 1
+Share (unique mount targets): 2
+SMB Request/Response Buffer: 1 Pool size: 5
+SMB Small Req/Resp Buffer: 1 Pool size: 30
+Operations (MIDs): 0
+
+0 session 0 share reconnects
+Total vfs operations: 16 maximum at one time: 2
+
+1) \\server1\share1
+SMBs: 9 Oplocks breaks: 0
+Reads:  0 Bytes: 0
+Writes: 0 Bytes: 0
+Flushes: 0
+Locks: 0 HardLinks: 0 Symlinks: 0
+Opens: 0 Closes: 0 Deletes: 0
+Posix Opens: 0 Posix Mkdirs: 0
+Mkdirs: 0 Rmdirs: 0
+Renames: 0 T2 Renames 0
+FindFirst: 1 FNext 0 FClose 0
+
+2) \\server2\share2
+SMBs: 20
+Negotiates: 0 sent 0 failed
+SessionSetups: 0 sent 0 failed
+Logoffs: 0 sent 0 failed
+TreeConnects: 0 sent 0 failed
+TreeDisconnects: 0 sent 0 failed
+Creates: 0 sent 2 failed
+Closes: 0 sent 0 failed
+Flushes: 0 sent 0 failed
+Reads: 0 sent 0 failed
+Writes: 0 sent 0 failed
+Locks: 0 sent 0 failed
+IOCTLs: 0 sent 0 failed
+Cancels: 0 sent 0 failed
+Echos: 0 sent 0 failed
+QueryDirectories: 0 sent 0 failed
+ChangeNotifies: 0 sent 0 failed
+QueryInfos: 0 sent 0 failed
+SetInfos: 0 sent 0 failed
+OplockBreaks: 0 sent 0 failed`,
+			stats: &cifs.ClientStats{
+				Header: map[string]uint64{
+					"operations":         0,
+					"sessionCount":       0,
+					"sessions":           1,
+					"shareReconnects":    0,
+					"shares":             2,
+					"smbBuffer":          1,
+					"smbPoolSize":        5,
+					"smbSmallBuffer":     1,
+					"smbSmallPoolSize":   30,
+					"totalMaxOperations": 2,
+					"totalOperations":    16,
+				},
+				SMB1Stats: []*cifs.SMB1Stats{
+					&cifs.SMB1Stats{
+						SessionIDs: cifs.SessionIDs{
+							SessionID: 1,
+							Server:    "server1",
+							Share:     "\\share1",
+						},
+						Stats: map[string]uint64{
+							"breaks":      0,
+							"closes":      0,
+							"deletes":     0,
+							"fClose":      0,
+							"fNext":       0,
+							"findFirst":   1,
+							"flushes":     0,
+							"hardlinks":   0,
+							"locks":       0,
+							"mkdirs":      0,
+							"opens":       0,
+							"posixMkdirs": 0,
+							"posixOpens":  0,
+							"reads":       0,
+							"readsBytes":  0,
+							"renames":     0,
+							"rmdirs":      0,
+							"smbs":        9,
+							"symlinks":    0,
+							"t2Renames":   0,
+							"writes":      0,
+							"writesBytes": 0,
+						},
+					},
+				},
+				SMB2Stats: []*cifs.SMB2Stats{
+					&cifs.SMB2Stats{
+						SessionIDs: cifs.SessionIDs{
+							SessionID: 2,
+							Server:    "server2",
+							Share:     "\\share2",
+						},
+						Stats: map[string]map[string]uint64{
+							"Cancels": {
+								"failed": 0,
+								"sent":   0,
+							},
+							"ChangeNotifies": {
+								"failed": 0,
+								"sent":   0,
+							},
+							"Closes": {
+								"failed": 0,
+								"sent":   0,
+							},
+							"Creates": {
+								"failed": 2,
+								"sent":   0,
+							},
+							"Echos": {
+								"failed": 0,
+								"sent":   0,
+							},
+							"Flushes": {
+								"failed": 0,
+								"sent":   0,
+							},
+							"IOCTLs": {
+								"failed": 0,
+								"sent":   0,
+							},
+							"Locks": {
+								"failed": 0,
+								"sent":   0,
+							},
+							"Logoffs": {
+								"failed": 0,
+								"sent":   0,
+							},
+							"Negotiates": {
+								"failed": 0,
+								"sent":   0,
+							},
+							"OplockBreaks": {
+								"failed": 0,
+								"sent":   0,
+							},
+							"QueryDirectories": {
+								"failed": 0,
+								"sent":   0,
+							},
+							"QueryInfos": {
+								"failed": 0,
+								"sent":   0,
+							},
+							"Reads": {
+								"failed": 0,
+								"sent":   0,
+							},
+							"SessionSetups": {
+								"failed": 0,
+								"sent":   0,
+							},
+							"SetInfos": {
+								"failed": 0,
+								"sent":   0,
+							},
+							"TreeConnects": {
+								"failed": 0,
+								"sent":   0,
+							},
+							"TreeDisconnects": {
+								"failed": 0,
+								"sent":   0,
+							},
+							"Writes": {
+								"failed": 0,
+								"sent":   0,
+							},
+							"smbs": {
+								"smbs": 20,
+							},
+						},
+					},
+				},
+			},
 		},
 	}
 	for _, tt := range tests {
