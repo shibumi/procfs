@@ -30,6 +30,7 @@ type SMB2Stats struct {
 	Stats      map[string]map[string]uint64
 }
 
+// model for the Share sessionID "number) \\server\share"
 type SessionIDs struct {
 	SessionID uint64
 	Server    string

@@ -55,13 +55,17 @@ func ParseClientStats(r io.Reader) (*ClientStats, error) {
 	var tmpSMB1Stats *SMB1Stats
 	var tmpSMB2Stats *SMB2Stats
 	var tmpSessionIDs *SessionIDs
+	// The legacy variable sets the current context. True for SMB1, False for SMB2
 	legacy := true
 	for scanner.Scan() {
 		line := scanner.Text()
 		if legacy {
+			// This part manages the parsing of SMB1
 			for _, regexpSMB1 := range regexpSMB1s {
 				match := regexpSMB1.FindStringSubmatch(line)
 				if 0 == len(match) {
+					// Check for SMB1 Line: "SMBs: 9 Oplocks breaks: 0"
+					// If this Check fails we change to SMB2 Statistics
 					if strings.HasPrefix(line, "SMBs:") && !(strings.Contains(line, "breaks")) {
 						legacy = false
 						tmpSMB2Stats = &SMB2Stats{
@@ -128,10 +132,13 @@ func ParseClientStats(r io.Reader) (*ClientStats, error) {
 				break
 			}
 		} else {
+			// This part manages the parsing of SMB2 Shares
 			var keyword string
 			for _, regexpSMB2 := range regexpSMB2s {
 				match := regexpSMB2.FindStringSubmatch(line)
 				if 0 == len(match) {
+					// Check for SMB2 Line: "SMBs: 9"
+					// If this Check fails we change to SMB1 Statistics
 					if strings.HasPrefix(line, "SMBs:") && strings.Contains(line, "breaks") {
 						legacy = true
 						tmpSMB1Stats = &SMB1Stats{
