@@ -103,6 +103,144 @@ FindFirst: 1 FNext 0 FClose 0`,
 					},
 				},
 			},
+		}, {
+			name: "SMB2 statistics",
+			content: `Resources in use
+CIFS Session: 2
+Share (unique mount targets): 4
+SMB Request/Response Buffer: 2 Pool size: 6
+SMB Small Req/Resp Buffer: 2 Pool size: 30
+Operations (MIDs): 0
+
+0 session 0 share reconnects
+Total vfs operations: 90 maximum at one time: 2
+
+1) \\server\share1
+SMBs: 20
+Negotiates: 0 sent 0 failed
+SessionSetups: 0 sent 0 failed
+Logoffs: 0 sent 0 failed
+TreeConnects: 0 sent 0 failed
+TreeDisconnects: 0 sent 0 failed
+Creates: 0 sent 2 failed
+Closes: 0 sent 0 failed
+Flushes: 0 sent 0 failed
+Reads: 0 sent 0 failed
+Writes: 0 sent 0 failed
+Locks: 0 sent 0 failed
+IOCTLs: 0 sent 0 failed
+Cancels: 0 sent 0 failed
+Echos: 0 sent 0 failed
+QueryDirectories: 0 sent 0 failed
+ChangeNotifies: 0 sent 0 failed
+QueryInfos: 0 sent 0 failed
+SetInfos: 0 sent 0 failed
+OplockBreaks: 0 sent 0 failed`,
+			stats: &cifs.ClientStats{
+				Header: map[string]uint64{
+					"operations":         0,
+					"sessionCount":       0,
+					"sessions":           2,
+					"shareReconnects":    0,
+					"shares":             4,
+					"smbBuffer":          2,
+					"smbPoolSize":        6,
+					"smbSmallBuffer":     2,
+					"smbSmallPoolSize":   30,
+					"totalMaxOperations": 2,
+					"totalOperations":    90,
+				},
+				SMB2Stats: []*cifs.SMB2Stats{
+					&cifs.SMB2Stats{
+						SessionIDs: cifs.SessionIDs{
+							SessionID: 1,
+							Server:    "server",
+							Share:     "\\share1",
+						},
+						Stats: map[string]map[string]uint64{
+							"Cancels": {
+							"failed": 0,
+							"sent": 0,
+						},
+						"ChangeNotifies": {
+							"failed": 0,
+							"sent": 0,
+						},
+						"Closes": {
+							"failed": 0,
+							"sent": 0,
+						},
+						"Creates": {
+							"failed": 2,
+							"sent": 0,
+						},
+						"Echos": {
+							"failed": 0,
+							"sent": 0,
+						},
+						"Flushes": {
+							"failed": 0,
+							"sent": 0,
+						},
+						"IOCTLs": {
+							"failed": 0,
+							"sent": 0,
+						},
+						"Locks": {
+							"failed": 0,
+							"sent": 0,
+						},
+						"Logoffs": {
+							"failed": 0,
+							"sent": 0,
+						},
+						"Negotiates": {
+							"failed": 0,
+							"sent": 0,
+						},
+						"OplockBreaks": {
+							"failed": 0,
+							"sent": 0,
+						},
+						"QueryDirectories": {
+							"failed": 0,
+							"sent": 0,
+						},
+						"QueryInfos": {
+							"failed": 0,
+							"sent": 0,
+						},
+						"Reads": {
+							"failed": 0,
+							"sent": 0,
+						},
+						"SessionSetups": {
+							"failed": 0,
+							"sent": 0,
+						},
+						"SetInfos": {
+							"failed": 0,
+							"sent": 0,
+						},
+						"TreeConnects": {
+							"failed": 0,
+							"sent": 0,
+						},
+						"TreeDisconnects": {
+							"failed": 0,
+							"sent": 0,
+						},
+						"Writes": {
+							"failed": 0,
+							"sent": 0,
+						},
+						"smbs": {
+							"smbs": 20,
+						},
+						},
+					},
+				},
+			},
 		},
 	}
 	for _, tt := range tests {
