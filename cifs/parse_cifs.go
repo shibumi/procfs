@@ -22,36 +22,31 @@ import (
 	"strings"
 )
 
+func parseHeader(line string, header map[string]uint64) error {
+	for _, regexpHeader := range regexpHeaders {
+		match := regexpHeader.FindStringSubmatch(line)
+		if match == nil {
+			continue
+		}
+		for index, name := range regexpHeader.SubexpNames() {
+			if index == 0 || name == "" {
+				continue
+			}
+			value, err := strconv.ParseUint(match[index], 10, 64)
+			if nil != err {
+				return fmt.Errorf("Invalid value in header")
+			}
+			header[name] = value
+		}
+	}
+	return nil
+}
+
 // ParseClientStats returns stats read from /proc/fs/cifs/Stats
 func ParseClientStats(r io.Reader) (*ClientStats, error) {
 	stats := &ClientStats{}
 	stats.Header = make(map[string]uint64)
 	scanner := bufio.NewScanner(r)
-	// Parse header
-	for scanner.Scan() {
-		line := scanner.Text()
-		for _, regexpHeader := range regexpHeaders {
-			match := regexpHeader.FindStringSubmatch(line)
-			if 0 == len(match) {
-				continue
-			}
-			for index, name := range regexpHeader.SubexpNames() {
-				if 0 == index || "" == name {
-					continue
-				}
-				value, err := strconv.ParseUint(match[index], 10, 64)
-				if nil != err {
-					continue
-				}
-				stats.Header[name] = value
-			}
-			break
-		}
-		if strings.HasPrefix(line, "Total vfs") {
-			break
-		}
-	}
-	// Parse Shares
 	var tmpSMB1Stats *SMB1Stats
 	var tmpSMB2Stats *SMB2Stats
 	var tmpSessionIDs *SessionIDs
@@ -59,6 +54,7 @@ func ParseClientStats(r io.Reader) (*ClientStats, error) {
 	legacy := true
 	for scanner.Scan() {
 		line := scanner.Text()
+		parseHeader(line, stats.Header)
 		if legacy {
 			// This part manages the parsing of SMB1
 			for _, regexpSMB1 := range regexpSMB1s {
