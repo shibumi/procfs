@@ -55,9 +55,11 @@ var regexpHeaders = [...]*regexp.Regexp{
 	regexp.MustCompile(`Total vfs operations: (?P<totalOperations>\d+) maximum at one time: (?P<totalMaxOperations>\d+)`),
 }
 
+// Fixed regex for parsing the SessionIDs
+var regexpSessionIDs *regexp.Regexp = regexp.MustCompile(`(?P<sessionID>\d+)\) \\\\(?P<server>[A-Za-z1-9-.]+)(?P<share>.+)`)
+
 // Array with fixed regex for parsing SMB1
 var regexpSMB1s = [...]*regexp.Regexp{
-	regexp.MustCompile(`(?P<sessionID>\d+)\) \\\\(?P<server>[A-Za-z1-9-.]+)(?P<share>.+)`),
 	regexp.MustCompile(`SMBs: (?P<smbs>\d+) Oplocks breaks: (?P<breaks>\d+)`),
 	regexp.MustCompile(`Reads:  (?P<reads>\d+) Bytes: (?P<readsBytes>\d+)`),
 	regexp.MustCompile(`Writes: (?P<writes>\d+) Bytes: (?P<writesBytes>\d+)`),
@@ -72,7 +74,6 @@ var regexpSMB1s = [...]*regexp.Regexp{
 
 // Array with fixed regex for parsing SMB2
 var regexpSMB2s = [...]*regexp.Regexp{
-	regexp.MustCompile(`(?P<sessionID>\d+)\) \\\\(?P<server>[A-Za-z1-9-.]+)(?P<share>.+)`),
 	regexp.MustCompile(`SMBs: (?P<smbs>\d+)`),
 	regexp.MustCompile(`(?P<keyword>.*): (?P<sent>\d+) sent (?P<failed>\d+) failed`),
 }

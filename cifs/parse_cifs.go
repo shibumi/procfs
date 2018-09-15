@@ -17,9 +17,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"regexp"
 	"strconv"
-	"strings"
 )
 
 func parseHeader(line string, header map[string]uint64) error {
@@ -33,10 +31,84 @@ func parseHeader(line string, header map[string]uint64) error {
 				continue
 			}
 			value, err := strconv.ParseUint(match[index], 10, 64)
-			if nil != err {
+			if err != nil {
 				return fmt.Errorf("Invalid value in header")
 			}
 			header[name] = value
+		}
+	}
+	return nil
+}
+
+func parseSessionIDs(line string, sessionIDs SessionIDs) (SessionIDs, error) {
+	match := regexpSessionIDs.FindStringSubmatch(line)
+	if match == nil {
+		return sessionIDs, nil
+	}
+	for index, name := range regexpSessionIDs.SubexpNames() {
+		if index == 0 || name == "" {
+			continue
+		}
+		switch name {
+		case "sessionID":
+			value, err := strconv.ParseUint(match[index], 10, 64)
+			if err != nil {
+				return sessionIDs, fmt.Errorf("Invalid value for sessionID")
+			}
+			sessionIDs.SessionID = value
+		case "server":
+			if match[index] != "" {
+				sessionIDs.Server = match[index]
+			}
+		case "share":
+			if match[index] != "" {
+				sessionIDs.Share = match[index]
+			}
+		default:
+			return sessionIDs, nil
+		}
+	}
+	return sessionIDs, nil
+}
+
+func parseSMB1(line string, smb1Stats map[string]uint64) error {
+	for _, regexpSMB1 := range regexpSMB1s {
+		match := regexpSMB1.FindStringSubmatch(line)
+		if match == nil {
+			continue
+		}
+		for index, name := range regexpSMB1.SubexpNames() {
+			if index == 0 || name == "" {
+				continue
+			}
+			value, err := strconv.ParseUint(match[index], 10, 64)
+			if err != nil {
+				return fmt.Errorf("Invalid value in SMB1 statistics")
+			}
+			smb1Stats[name] = value
+		}
+	}
+	return nil
+}
+
+func parseSMB2(line string, smb2Stats map[string]map[string]uint64) error {
+	var keyword string
+	for _, regexpSMB2 := range regexpSMB2s {
+		match := regexpSMB2.FindStringSubmatch(line)
+		if match == nil {
+			continue
+		}
+		for index, name := range regexpSMB2.SubexpNames() {
+			if index == 0 || name == "" {
+				continue
+			}
+			value, err := strconv.ParseUint(match[index], 10, 64)
+			if err != nil {
+				keyword = match[index]
+				smb2Stats[keyword] = make(map[string]uint64)
+				continue
+			}
+			smb2Stats[keyword][name] = value
 		}
 	}
 	return nil
@@ -46,170 +118,20 @@ func parseHeader(line string, header map[string]uint64) error {
 func ParseClientStats(r io.Reader) (*ClientStats, error) {
 	stats := &ClientStats{}
 	stats.Header = make(map[string]uint64)
+	smb1Stats := make(map[string]uint64)
+	smb2Stats := make(map[string]map[string]uint64)
 	scanner := bufio.NewScanner(r)
-	var tmpSMB1Stats *SMB1Stats
-	var tmpSMB2Stats *SMB2Stats
-	var tmpSessionIDs *SessionIDs
-	// The legacy variable sets the current context. True for SMB1, False for SMB2
-	legacy := true
+	var tmpSessionIDs SessionIDs
 	for scanner.Scan() {
 		line := scanner.Text()
-		parseHeader(line, stats.Header)
-		if legacy {
-			// This part manages the parsing of SMB1
-			for _, regexpSMB1 := range regexpSMB1s {
-				match := regexpSMB1.FindStringSubmatch(line)
-				if 0 == len(match) {
-					// Check for SMB1 Line: "SMBs: 9 Oplocks breaks: 0"
-					// If this Check fails we change to SMB2 Statistics
-					if strings.HasPrefix(line, "SMBs:") && !(strings.Contains(line, "breaks")) {
-						legacy = false
-						tmpSMB2Stats = &SMB2Stats{
-							Stats: make(map[string]map[string]uint64),
-						}
-						stats.SMB2Stats = append(stats.SMB2Stats, tmpSMB2Stats)
-						re := regexp.MustCompile("[0-9]+")
-						find_smb := re.FindAllString(line, 1)
-						tmpSMB2Stats.Stats["smbs"] = make(map[string]uint64)
-						value, err := strconv.ParseUint(find_smb[0], 10, 64)
-						if nil != err {
-							continue
-						}
-						tmpSMB2Stats.Stats["smbs"]["smbs"] = value
-						break
-					}
-					continue
-				}
-				for index, name := range regexpSMB1.SubexpNames() {
-					if 0 == index || "" == name {
-						continue
-					}
-					switch name {
-					case "sessionID":
-						value, err := strconv.ParseUint(match[index], 10, 64)
-						if nil != err {
-							continue
-						}
-						tmpSessionIDs = &SessionIDs{
-							SessionID: value,
-						}
-					case "server":
-						if "" != match[index] {
-							tmpSessionIDs.Server = match[index]
-						}
-					case "share":
-						if "" != match[index] {
-							tmpSessionIDs.Share = match[index]
-						}
-					case "smbs":
-						tmpSMB1Stats = &SMB1Stats{
-							Stats: make(map[string]uint64),
-						}
-						stats.SMB1Stats = append(stats.SMB1Stats, tmpSMB1Stats)
-						value, err := strconv.ParseUint(match[index], 10, 64)
-						if nil != err {
-							continue
-						}
-						tmpSMB1Stats.Stats[name] = value
-					default:
-						value, err := strconv.ParseUint(match[index], 10, 64)
-						if nil != err {
-							continue
-						}
-						if 0 == tmpSMB1Stats.SessionIDs.SessionID {
-							tmpSMB1Stats.SessionIDs.SessionID = tmpSessionIDs.SessionID
-							tmpSMB1Stats.SessionIDs.Server = tmpSessionIDs.Server
-							tmpSMB1Stats.SessionIDs.Share = tmpSessionIDs.Share
-
-						}
-						tmpSMB1Stats.Stats[name] = value
-					}
-				}
-				break
-			}
-		} else {
-			// This part manages the parsing of SMB2 Shares
-			var keyword string
-			for _, regexpSMB2 := range regexpSMB2s {
-				match := regexpSMB2.FindStringSubmatch(line)
-				if 0 == len(match) {
-					// Check for SMB2 Line: "SMBs: 9"
-					// If this Check fails we change to SMB1 Statistics
-					if strings.HasPrefix(line, "SMBs:") && strings.Contains(line, "breaks") {
-						legacy = true
-						tmpSMB1Stats = &SMB1Stats{
-							Stats: make(map[string]uint64),
-						}
-						stats.SMB1Stats = append(stats.SMB1Stats, tmpSMB1Stats)
-						re := regexp.MustCompile("[0-9]+")
-						find_smb := re.FindAllString(line, 2)
-						smbs, err := strconv.ParseUint(find_smb[0], 10, 64)
-						if nil != err {
-							continue
-						}
-						breaks, err := strconv.ParseUint(find_smb[1], 10, 64)
-						if nil != err {
-							continue
-						}
-						tmpSMB1Stats.Stats["smbs"] = smbs
-						tmpSMB1Stats.Stats["breaks"] = breaks
-
-						break
-					}
-					continue
-				}
-				for index, name := range regexpSMB2.SubexpNames() {
-					if 0 == index || "" == name {
-						continue
-					}
-					switch name {
-					case "sessionID":
-						value, err := strconv.ParseUint(match[index], 10, 64)
-						if nil != err {
-							continue
-						}
-						tmpSessionIDs = &SessionIDs{
-							SessionID: value,
-						}
-					case "server":
-						if "" != match[index] {
-							tmpSessionIDs.Server = match[index]
-						}
-					case "share":
-						if "" != match[index] {
-							tmpSessionIDs.Share = match[index]
-						}
-					case "smbs":
-						tmpSMB2Stats = &SMB2Stats{
-							Stats: make(map[string]map[string]uint64),
-						}
-						stats.SMB2Stats = append(stats.SMB2Stats, tmpSMB2Stats)
-						value, err := strconv.ParseUint(match[index], 10, 64)
-						if nil != err {
-							continue
-						}
-						tmpSMB2Stats.Stats[name] = make(map[string]uint64)
-						tmpSMB2Stats.Stats[name][name] = value
-
-					default:
-						value, err := strconv.ParseUint(match[index], 10, 64)
-						if nil != err {
-							keyword = match[index]
-							tmpSMB2Stats.Stats[keyword] = make(map[string]uint64)
-							continue
-						}
-						if 0 == tmpSMB2Stats.SessionIDs.SessionID {
-							tmpSMB2Stats.SessionIDs.SessionID = tmpSessionIDs.SessionID
-							tmpSMB2Stats.SessionIDs.Server = tmpSessionIDs.Server
-							tmpSMB2Stats.SessionIDs.Share = tmpSessionIDs.Share
-
-						}
-						tmpSMB2Stats.Stats[keyword][name] = value
-					}
-				}
-				break
-			}
+		if line == "" {
+			continue
 		}
+		parseHeader(line, stats.Header)
+		tmpSessionIDs, _ := parseSessionIDs(line, tmpSessionIDs)
+		parseSMB1(line, smb1Stats)
+		parseSMB2(line, smb2Stats)
+		fmt.Println(tmpSessionIDs)
 	}
 
 	if err := scanner.Err(); err != nil {
